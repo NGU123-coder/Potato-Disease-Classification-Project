@@ -1,0 +1,5 @@
+# Force LF for text files
+*.txt text eol=lf
+*.py text eol=lf
+requirements.txt text eol=lf
+runtime.txt text eol=lf
