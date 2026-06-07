@@ -1,7 +1,7 @@
-tensorflow-cpu
-fastapi
-uvicorn
-python-multipart
-pillow
-numpy
-gunicorn
+tensorflow-cpu==2.15.0
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+python-multipart==0.0.9
+pillow==10.2.0
+numpy<2.0.0
+gunicorn==21.2.0
