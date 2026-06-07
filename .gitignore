@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+ENV/
+.env
+.ipynb_checkpoints/
+*.ipynb
+
+# Node
+frontend/node_modules/
+frontend/build/
+frontend/.env
+frontend/.env.local
+
+# Models (Make sure we DON'T ignore the actual models)
+!saved_models/
+!saved_models/**
+
+# OS
+.DS_Store
+Thumbs.db
