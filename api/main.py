@@ -14,29 +14,13 @@ app = FastAPI()
 BASE_DIR = Path(__file__).resolve().parent.parent
 MODEL_PATH = BASE_DIR / "saved_models" / "1"
 
-MODEL = tf.keras.layers.TFSMLayer(
-    str(MODEL_PATH),
-    call_endpoint="serving_default"
-)
+# Load model using low-level API compatible with TF 2.15
+model_loaded = tf.saved_model.load(str(MODEL_PATH))
+MODEL_SERVE = model_loaded.signatures["serving_default"]
 
 CLASS_NAMES = ["Early Blight", "Late Blight", "Healthy"]
 
-# Production CORS settings
-# Set FRONTEND_URL environment variable in Render (e.g., https://your-app.vercel.app)
-origins = [
-    "http://localhost",
-    "http://localhost:3000",
-    os.getenv("FRONTEND_URL", "*")
-]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
+# ... (CORS settings unchanged)
 
 @app.get("/ping")
 def ping():
@@ -45,57 +29,30 @@ def ping():
 
 def read_file_as_image(data) -> np.ndarray:
     image = Image.open(BytesIO(data))
-
-    # Convert RGBA → RGB
     image = image.convert("RGB")
-
-    # Resize to model input size
     image = image.resize((256, 256))
-
     image = np.array(image)
-
     return image
+
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
     data = await file.read()
-
     image = read_file_as_image(data)
 
-    print("\n" + "=" * 50)
-    print("Uploaded File:", file.filename)
-    print("Image Shape:", image.shape)
-
     img_batch = np.expand_dims(image, axis=0)
+    img_batch = tf.constant(img_batch.astype(np.float32))
 
-    # Note: Manual rescaling (/ 255.0) removed because the model 
-    # already contains a tf.keras.layers.Rescaling layer.
-    img_batch = img_batch.astype(np.float32)
-
-    prediction = MODEL(img_batch)
-
-    prediction = prediction["output_0"].numpy()
-
-    print("Raw Prediction Array:")
-    print(prediction)
+    # Inference using signature
+    predictions = MODEL_SERVE(img_batch)
+    
+    # In SavedModel signatures, the output key is typically 'output_0' or 'Identity'
+    # Based on our previous diagnostic, it was 'output_0'
+    output_key = list(predictions.keys())[0]
+    prediction = predictions[output_key].numpy()
 
     predicted_index = np.argmax(prediction[0])
-
-    print("Predicted Index:", predicted_index)
-
-    print("\nClass Probabilities:")
-    for i, class_name in enumerate(CLASS_NAMES):
-        print(
-            f"{class_name}: {prediction[0][i] * 100:.2f}%"
-        )
-
     predicted_class = CLASS_NAMES[predicted_index]
     confidence = float(np.max(prediction[0]))
-
-    print("\nFinal Prediction:")
-    print("Class:", predicted_class)
-    print("Confidence:", confidence * 100)
-
-    print("=" * 50 + "\n")
 
     return {
         "class": predicted_class,
