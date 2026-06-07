@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { makeStyles, withStyles } from "@material-ui/core/styles";
 import AppBar from "@material-ui/core/AppBar";
 import Toolbar from "@material-ui/core/Toolbar";
@@ -152,7 +152,7 @@ export const ImageUpload = () => {
   const [isLoading, setIsloading] = useState(false);
   let confidence = 0;
 
-  const sendFile = async () => {
+  const sendFile = useCallback(async () => {
     if (image) {
       let formData = new FormData();
       formData.append("file", selectedFile);
@@ -166,7 +166,7 @@ export const ImageUpload = () => {
       }
       setIsloading(false);
     }
-  }
+  }, [image, selectedFile]);
 
   const clearData = () => {
     setData(null);
@@ -190,7 +190,7 @@ export const ImageUpload = () => {
     }
     setIsloading(true);
     sendFile();
-  }, [preview]);
+  }, [preview, sendFile]);
 
   const onSelectFile = (files) => {
     if (!files || files.length === 0) {
