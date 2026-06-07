@@ -20,7 +20,22 @@ MODEL_SERVE = model_loaded.signatures["serving_default"]
 
 CLASS_NAMES = ["Early Blight", "Late Blight", "Healthy"]
 
-# ... (CORS settings unchanged)
+# Production CORS settings
+# Set FRONTEND_URL environment variable in Render (e.g., https://your-app.vercel.app)
+origins = [
+    "http://localhost",
+    "http://localhost:3000",
+    os.getenv("FRONTEND_URL", "*")
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 @app.get("/ping")
 def ping():
